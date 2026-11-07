@@ -188,7 +188,7 @@ class WoodenCabinet(ArticulatedObject):
             return False
 
     def is_close(self, qpos):
-        if qpos > min(self.object_properties["articulation"]["default_close_ranges"]):
+        if qpos >= min(self.object_properties["articulation"]["default_close_ranges"]):
             return True
         else:
             return False
@@ -213,7 +213,7 @@ class WhiteCabinet(ArticulatedObject):
             return False
 
     def is_close(self, qpos):
-        if qpos > min(self.object_properties["articulation"]["default_close_ranges"]):
+        if qpos >= min(self.object_properties["articulation"]["default_close_ranges"]):
             return True
         else:
             return False

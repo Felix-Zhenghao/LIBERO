@@ -1,6 +1,6 @@
 (define (problem LIBERO_Kitchen_Tabletop_Manipulation)
   (:domain robosuite)
-  (:language stack the black bowl in the middle on the black bowl at the front)
+  (:language stack the black bowl in the middle on the black bowl at the back)
     (:regions
       (wooden_cabinet_init_region
           (:target kitchen_table)

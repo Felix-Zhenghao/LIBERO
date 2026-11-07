@@ -145,10 +145,16 @@ libero_task_map = {
 # Keep legacy task names and file paths stable when an instruction is corrected.
 # These values must match the corresponding BDDL :language fields.
 libero_task_language_overrides = {
+    "KITCHEN_SCENE4_put_the_wine_bottle_on_the_wine_rack":
+        "put the wine bottle on the upper shelf of the wine rack",
     "KITCHEN_SCENE9_put_the_frying_pan_on_the_cabinet_shelf":
         "put the frying pan in the upper compartment of the wooden shelving unit",
     "STUDY_SCENE3_pick_up_the_red_mug_and_place_it_to_the_right_of_the_caddy":
         "pick up the red mug and place it to the right compartment of the caddy",
+    "STUDY_SCENE3_pick_up_the_white_mug_and_place_it_to_the_right_of_the_caddy":
+        "pick up the white mug and place it to the right compartment of the caddy",
+    "STUDY_SCENE4_pick_up_the_book_in_the_middle_and_place_it_on_the_cabinet_shelf":
+        "pick up the book in the middle and place it in the upper compartment of the wooden shelving unit",
     "STUDY_SCENE4_pick_up_the_book_on_the_right_and_place_it_on_the_cabinet_shelf":
         "pick up the book on the right and place it in the upper compartment of the wooden shelving unit",
 }

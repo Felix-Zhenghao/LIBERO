@@ -117,7 +117,7 @@
   )
 
   (:goal
-    (And (On porcelain_mug_1 study_table_desk_caddy_right_region))
+    (And (In porcelain_mug_1 desk_caddy_1_right_contain_region))
   )
 
 )

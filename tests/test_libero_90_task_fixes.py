@@ -1,4 +1,4 @@
-"""Regression checks for the three task corrections in this fork.
+"""Regression checks for the task corrections in this fork.
 
 Goal probes set object reference points directly. They check the success
 conditions, not a policy's ability to execute a placement trajectory.
@@ -15,6 +15,10 @@ import yaml
 
 BENCHMARK_ROOT = Path(__file__).resolve().parents[1] / "libero" / "libero"
 EXPECTED_TASKS = {
+    27: (
+        "KITCHEN_SCENE4_put_the_wine_bottle_on_the_wine_rack",
+        "put the wine bottle on the upper shelf of the wine rack",
+    ),
     40: (
         "KITCHEN_SCENE9_put_the_frying_pan_on_the_cabinet_shelf",
         "put the frying pan in the upper compartment of the wooden shelving unit",
@@ -22,6 +26,14 @@ EXPECTED_TASKS = {
     84: (
         "STUDY_SCENE3_pick_up_the_red_mug_and_place_it_to_the_right_of_the_caddy",
         "pick up the red mug and place it to the right compartment of the caddy",
+    ),
+    85: (
+        "STUDY_SCENE3_pick_up_the_white_mug_and_place_it_to_the_right_of_the_caddy",
+        "pick up the white mug and place it to the right compartment of the caddy",
+    ),
+    86: (
+        "STUDY_SCENE4_pick_up_the_book_in_the_middle_and_place_it_on_the_cabinet_shelf",
+        "pick up the book in the middle and place it in the upper compartment of the wooden shelving unit",
     ),
     88: (
         "STUDY_SCENE4_pick_up_the_book_on_the_right_and_place_it_on_the_cabinet_shelf",
@@ -62,9 +74,11 @@ def test_task_ids_names_and_file_paths_are_preserved(runtime):
         assert task.init_states_file == name + ".pruned_init"
         assert suite.get_task_demonstration(task_id) == "libero_90/" + name + "_demo.hdf5"
         assert task.language == instruction
+        text = (BENCHMARK_ROOT / "bddl_files/libero_90" / task.bddl_file).read_text()
+        assert re.search(r"\(:language\s+([^)]*)\)", text).group(1) == instruction
 
 
-def test_only_the_three_requested_api_instructions_change(runtime):
+def test_only_the_requested_api_instructions_change(runtime):
     benchmark, _ = runtime
     changed_names = {entry[0] for entry in EXPECTED_TASKS.values()}
     count = 0
@@ -76,7 +90,7 @@ def test_only_the_three_requested_api_instructions_change(runtime):
     assert count == 130
 
 
-@pytest.fixture(scope="module", params=sorted(EXPECTED_TASKS))
+@pytest.fixture(scope="module", params=[40, 84, 85, 86, 88])
 def task_environment(request, runtime):
     benchmark, ControlEnv = runtime
     task_id = request.param
@@ -124,7 +138,7 @@ def test_goal_accepts_requested_compartment_and_rejects_alternatives(task_enviro
     assert len(goals) == 1
     predicate, object_name, target = goals[0]
     assert predicate == "in"
-    if task_id == 84:
+    if task_id in (84, 85):
         assert target == "desk_caddy_1_right_contain_region"
         rejected_regions = [
             "desk_caddy_1_left_contain_region",
@@ -158,7 +172,68 @@ def test_goal_accepts_requested_compartment_and_rejects_alternatives(task_enviro
         assert not accepts(point), region
 
 
-def test_task_84_keeps_its_bddl_instruction(runtime):
-    name, instruction = EXPECTED_TASKS[84]
+@pytest.mark.parametrize("task_id", [84, 85])
+def test_caddy_tasks_keep_their_bddl_instructions(task_id):
+    name, instruction = EXPECTED_TASKS[task_id]
     text = (BENCHMARK_ROOT / "bddl_files/libero_90" / (name + ".bddl")).read_text()
     assert re.search(r"\(:language\s+([^)]*)\)", text).group(1) == instruction
+
+
+@pytest.mark.parametrize("task_id, instruction, goal", [
+    (17, "stack the black bowl in the middle on the black bowl at the back",
+     "(On akita_black_bowl_2 akita_black_bowl_3)"),
+    (27, EXPECTED_TASKS[27][1], "(On wine_bottle_1 wine_rack_1_top_region)"),
+    (86, EXPECTED_TASKS[86][1], "(In black_book_1 wooden_two_layer_shelf_1_top_region)"),
+])
+def test_instruction_fixes_preserve_the_goal(runtime, task_id, instruction, goal):
+    benchmark, _ = runtime
+    task = benchmark.get_benchmark("libero_90")().get_task(task_id)
+    text = (BENCHMARK_ROOT / "bddl_files/libero_90" / task.bddl_file).read_text()
+    assert re.search(r"\(:language\s+([^)]*)\)", text).group(1) == instruction
+    assert text[text.index("(:goal"):].split() == ("(:goal (And " + goal + ") ) )").split()
+    if task_id == 17:
+        assert task.name == "KITCHEN_SCENE2_stack_the_middle_black_bowl_on_the_back_black_bowl"
+        assert task.language == "stack the middle black bowl on the back black bowl"
+
+
+@pytest.mark.parametrize("class_name", ["WoodenCabinet", "WhiteCabinet"])
+def test_cabinet_closed_boundary(runtime, class_name):
+    from libero.libero.envs.objects import articulated_objects
+
+    cabinet = getattr(articulated_objects, class_name)()
+    for qpos in (-0.15, -0.005, -1e-9):
+        assert not cabinet.is_close(qpos), qpos
+    for qpos in (-0.0, 0.0, 0.0025, 0.005):
+        assert cabinet.is_close(qpos), qpos
+
+
+@pytest.mark.parametrize("task_id", [0, 22, 28])
+def test_closed_drawer_at_zero_passes_native_goal_after_settling(runtime, task_id):
+    benchmark, ControlEnv = runtime
+    suite = benchmark.get_benchmark("libero_90")()
+    env = ControlEnv(
+        bddl_file_name=suite.get_task_bddl_file_path(task_id),
+        use_camera_obs=False,
+        has_renderer=False,
+        has_offscreen_renderer=False,
+        hard_reset=False,
+    )
+    try:
+        env.seed(0)
+        env.reset()
+        domain = env.env
+        predicate, target = domain.parsed_problem["goal_state"][0]
+        assert predicate == "close"
+        drawer = domain.object_states_dict[target]
+        drawer.set_joint(-0.15)
+        env.sim.forward()
+        assert not env.check_success()
+        drawer.set_joint(0.0)
+        env.sim.data.qvel[:] = 0.0
+        env.sim.forward()
+        assert env.check_success()
+        for _ in range(60):
+            env.step(np.zeros(7))
+        assert env.check_success()
+    finally:
+        env.close()
