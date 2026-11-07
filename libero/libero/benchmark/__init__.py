@@ -6,7 +6,10 @@ import torch
 
 from typing import List, NamedTuple, Type
 from libero.libero import get_libero_path
-from libero.libero.benchmark.libero_suite_task_map import libero_task_map
+from libero.libero.benchmark.libero_suite_task_map import (
+    libero_task_language_overrides,
+    libero_task_map,
+)
 
 BENCHMARK_MAPPING = {}
 
@@ -66,7 +69,9 @@ for libero_suite in libero_suites:
     task_maps[libero_suite] = {}
 
     for task in libero_task_map[libero_suite]:
-        language = grab_language_from_filename(task + ".bddl")
+        language = libero_task_language_overrides.get(
+            task, grab_language_from_filename(task + ".bddl")
+        )
         task_maps[libero_suite][task] = Task(
             name=task,
             language=language,

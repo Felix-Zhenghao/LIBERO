@@ -1,6 +1,6 @@
 (define (problem LIBERO_Kitchen_Tabletop_Manipulation)
   (:domain robosuite)
-  (:language put the frying pan on the cabinet shelf)
+  (:language put the frying pan in the upper compartment of the wooden shelving unit)
     (:regions
       (flat_stove_init_region
           (:target kitchen_table)

@@ -1,6 +1,6 @@
 (define (problem LIBERO_Study_Tabletop_Manipulation)
   (:domain robosuite)
-  (:language pick up the book on the right and place it on the cabinet shelf)
+  (:language pick up the book on the right and place it in the upper compartment of the wooden shelving unit)
     (:regions
       (yellow_book_right_init_region
           (:target study_table)

@@ -132,6 +132,43 @@ env.close()
 ```
 Currently, we only support sparse reward function (i.e., the agent receives `+1` when the task is finished). As sparse-reward RL is extremely hard to learn, currently we mainly focus on lifelong imitation learning.
 
+## LIBERO-90 corrections in this fork
+
+This fork corrects three tasks from upstream commit
+`8f1084e3132a39270c3a13ebe37270a43ece2a01`. Task IDs below are zero-based and
+use the default task order.
+
+| Task ID | Correction |
+| --- | --- |
+| 40 | The instruction now says: "put the frying pan in the upper compartment of the wooden shelving unit". The goal remains the upper interior compartment. |
+| 84 | The instruction stays unchanged. The goal now requires the red mug inside the caddy's right compartment: `(In red_coffee_mug_1 desk_caddy_1_right_contain_region)`. The old goal accepted a table region beside the caddy. |
+| 88 | The instruction now says: "pick up the book on the right and place it in the upper compartment of the wooden shelving unit". The goal remains the upper interior compartment. |
+
+`Task.language` returns the corrected instructions for these three tasks,
+including task 84's existing BDDL instruction. All other benchmark API
+instructions retain their upstream wording. The original task IDs, task names,
+BDDL filenames, initial-state files, and demonstration paths are preserved.
+Existing filename-derived prompts should be replaced with `task.language`.
+
+Task 84 has a changed success condition. Demonstrations collected for the old
+beside-the-caddy goal are not equivalent to the corrected compartment task;
+review or recollect them before using them to train this task. This repository
+does not rewrite downloaded datasets. Tasks 40 and 88 keep their original
+success conditions and initial states.
+
+When reusing an existing LIBERO configuration, check that
+`get_libero_path("bddl_files")` points to this fork's task files.
+
+With the LIBERO dependencies and `pytest` installed, run the regression checks:
+
+```shell
+python -m pytest -q tests/test_libero_90_task_fixes.py
+```
+
+The checks cover instruction consistency, stable task identities, all 50 saved
+initial states per corrected task, and acceptance or rejection of points in the
+target and alternative regions. They do not require camera rendering.
+
 ## Training
 To start a lifelong learning experiment, please choose:
 - `BENCHMARK` from `[LIBERO_SPATIAL, LIBERO_OBJECT, LIBERO_GOAL, LIBERO_90, LIBERO_10]`
