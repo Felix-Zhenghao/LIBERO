@@ -80,7 +80,9 @@ def test_task_ids_names_and_file_paths_are_preserved(runtime):
 
 def test_only_the_requested_api_instructions_change(runtime):
     benchmark, _ = runtime
-    changed_names = {entry[0] for entry in EXPECTED_TASKS.values()}
+    changed_names = {entry[0] for entry in EXPECTED_TASKS.values()} | {
+        "put_the_wine_bottle_on_the_rack",
+    }
     count = 0
     for task_map in benchmark.task_maps.values():
         for task in task_map.values():

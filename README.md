@@ -148,6 +148,10 @@ use the default LIBERO-90 task order.
 | 86 | The instruction now specifies the upper compartment of the wooden shelving unit. The goal remains unchanged. |
 | 88 | The instruction now says: "pick up the book on the right and place it in the upper compartment of the wooden shelving unit". The goal remains the upper interior compartment. |
 
+LIBERO-Goal task 9 now says: "put the wine bottle on the upper shelf of the wine
+rack" in both its BDDL instruction and `Task.language`. Its goal remains
+`(On wine_bottle_1 wine_rack_1_top_region)`.
+
 `Task.language` returns the corrected instructions for these tasks,
 including tasks 84 and 85's existing BDDL instructions. All other benchmark API
 instructions retain their upstream wording. The original task IDs, task names,

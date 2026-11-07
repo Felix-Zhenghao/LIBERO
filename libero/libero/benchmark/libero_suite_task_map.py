@@ -145,6 +145,8 @@ libero_task_map = {
 # Keep legacy task names and file paths stable when an instruction is corrected.
 # These values must match the corresponding BDDL :language fields.
 libero_task_language_overrides = {
+    "put_the_wine_bottle_on_the_rack":
+        "put the wine bottle on the upper shelf of the wine rack",
     "KITCHEN_SCENE4_put_the_wine_bottle_on_the_wine_rack":
         "put the wine bottle on the upper shelf of the wine rack",
     "KITCHEN_SCENE9_put_the_frying_pan_on_the_cabinet_shelf":

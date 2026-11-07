@@ -1,6 +1,6 @@
 (define (problem LIBERO_Tabletop_Manipulation)
   (:domain robosuite)
-  (:language Put the wine bottle on the rack)
+  (:language put the wine bottle on the upper shelf of the wine rack)
     (:regions
       (plate_region
           (:target main_table)
