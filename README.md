@@ -183,6 +183,40 @@ of points in the target and alternative regions. They also check the cabinet
 boundary and three native drawer goals after settling. They do not require camera
 rendering.
 
+## Procedural scores in this fork
+
+`libero/libero/envs/procedural_score.py` gives partial credit on the research
+plan's training and validation tasks. A task's procedure is an ordered list of
+stages followed by the task's own BDDL goal. Each stage reached in order earns
+0.2, and success scores 1 instead, so no task scores more than 1. The scorer
+credits each stage once, only after the stage before it, and only when its
+condition was false earlier in the episode.
+
+Stages reuse the BDDL goal predicates where they can, for example
+`(Open wooden_cabinet_1_top_region)`. Two conditions are new, and both are
+strict:
+
+- `Lifted`: both fingers touch the object, only the robot touches it, and it
+  is at least 5 cm above where it rested.
+- `CarriedOff`: the object is grasped, and its centre is outside the vertical
+  prism over a fixture's footprint. LIBERO-Spatial task 9 uses it, with the
+  bowl and the wooden cabinet.
+
+Tasks without a procedure score 1 on success and 0 otherwise.
+
+```python
+from libero.libero.envs.procedural_score import ProceduralScore
+
+score = ProceduralScore(env.env, task.name)   # after reset and settling
+score.update()                                # after every env step
+score.score                                   # 0, 0.2, 0.4 or 1
+```
+
+`python -m pytest -q tests/test_procedural_score.py` checks the scoring rules
+and that every planned task has a procedure. It also checks that no stage holds
+in the saved initial states, and that a scripted pick earns the lift stage only
+once the object is 5 cm up.
+
 ## Training
 To start a lifelong learning experiment, please choose:
 - `BENCHMARK` from `[LIBERO_SPATIAL, LIBERO_OBJECT, LIBERO_GOAL, LIBERO_90, LIBERO_10]`
