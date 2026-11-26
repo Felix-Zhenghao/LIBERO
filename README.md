@@ -185,12 +185,11 @@ rendering.
 
 ## Procedural scores in this fork
 
-`libero/libero/envs/procedural_score.py` gives partial credit on the research
-plan's training and validation tasks. A task's procedure is an ordered list of
-stages followed by the task's own BDDL goal. Each stage reached in order earns
-0.2, and success scores 1 instead, so no task scores more than 1. The scorer
-credits each stage once, only after the stage before it, and only when its
-condition was false earlier in the episode.
+`libero/libero/envs/procedural_score.py` gives partial credit on all 130 tasks.
+A task's procedure is an ordered list of stages followed by the task's own BDDL
+goal. Each stage reached in order earns 0.2, and success scores 1 instead, so no
+task scores more than 1. The scorer credits each stage once, only after the
+stage before it, and only when its condition was false earlier in the episode.
 
 Stages reuse the BDDL goal predicates where they can, for example
 `(Open wooden_cabinet_1_top_region)`. Two conditions are new, and both are
@@ -199,23 +198,50 @@ strict:
 - `Lifted`: both fingers touch the object, only the robot touches it, and it
   is at least 5 cm above where it rested.
 - `CarriedOff`: the object is grasped, and its centre is outside the vertical
-  prism over a fixture's footprint. LIBERO-Spatial task 9 uses it, with the
-  bowl and the wooden cabinet.
+  prism over a fixture's footprint. It is the pick-up stage when the object
+  starts on or in a fixture (a cabinet, the stove, the microwave).
+How each procedure was chosen:
 
-Tasks without a procedure score 1 on success and 0 otherwise.
+- A task with several clauses credits each finished clause, in the
+  instruction's order, with that clause's BDDL predicate.
+- A task that moves an object credits the pick-up before the placement.
+- A task that is one continuous motion (a drawer, a door, the stove knob, a
+  push, a slide) has no stage and scores success only. BDDL has no
+  intermediate state for it. There are 15 such tasks.
+
+104 tasks have one stage, 11 have two, and 15 have none. The 20 procedures that had stages when
+only 30 tasks were scored are unchanged. Of the 10 of those 30 tasks that scored
+success only, 9 now have one stage: LIBERO-90 tasks 37, 40 and 68,
+LIBERO-Spatial tasks 1, 3, 5 and 7, and LIBERO-Goal tasks 6 and 8. On these 9
+tasks a failed episode can now score 0.2 where it scored 0. LIBERO-Goal task 0
+still scores success only.
+
+A task with no stages, or a task name without an entry in `PROCEDURES`, scores
+1 on success and 0 otherwise.
 
 ```python
-from libero.libero.envs.procedural_score import ProceduralScore
+from libero.libero.envs.procedural_score import ProceduralScore, SETTLE_STEPS
 
-score = ProceduralScore(env.env, task.name)   # after reset and settling
+for _ in range(SETTLE_STEPS):                 # 10 zero-action steps after reset
+    env.step([0.] * 7)
+score = ProceduralScore(env.env, task.name)
 score.update()                                # after every env step
 score.score                                   # 0, 0.2, 0.4 or 1
 ```
 
-`python -m pytest -q tests/test_procedural_score.py` checks the scoring rules
-and that every planned task has a procedure. It also checks that no stage holds
-in the saved initial states, and that a scripted pick earns the lift stage only
-once the object is 5 cm up.
+Create the scorer only after those settling steps. The saved initial states are
+not at rest: some objects are pushed up out of the table and land again within 8
+control steps, and `Lifted` measures the rest height when the scorer is created.
+A few saved initial states are defective: the target object keeps moving after
+10 steps, and in some study-scene states a book falls off the table untouched
+(for example LIBERO-90 task 77, state 45). There the rest height is too high, so
+`Lifted` can only under-credit.
+
+`python -m pytest -q tests/test_procedural_score.py` takes about 10 minutes. It
+checks the scoring rules, that every task has a procedure, and that the 20
+earlier procedures are unchanged. In every task it checks that no stage holds in
+the saved initial states and that idling earns nothing. It also checks a
+scripted pick and `CarriedOff` with objects placed by hand.
 
 ## Training
 To start a lifelong learning experiment, please choose:
